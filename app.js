@@ -35,9 +35,15 @@ app.get('/add/:theUrlToShorten(*)', (req,res,next)=>{
                return res.send('error could not save to the database');
            }
        });
-      return res.json({data});
+      return res.json(data);
    } else{
-       return res.json({theUrlToShorten:'not a valid url'});
+       var data = new myShortUrl(
+           {
+            theUrlInput: theUrlToShorten,
+            theShortUrl: 'invalid url'
+           }
+       );
+       return res.json(data);
    }
 
    //return res.json({theUrlToShorten});
@@ -45,7 +51,24 @@ app.get('/add/:theUrlToShorten(*)', (req,res,next)=>{
 });
 
 
+//request to query database and forward to input url
+app.get('/:theUrlToRedirect', (req,res,next)=>{
+    var  shorterUrlAlreadyGen  = req.params.theUrlToRedirect;
 
+  //access one value of data in the myShortUrl database, compare the shortUrl property in the database
+  myShortUrl.findOne({'theShortUrl': shorterUrlAlreadyGen},(err,data)=>{
+      if(err){
+          return res.send('error could not access database');
+      }
+      var regexHttp = new RegExp("^(http|https)://", "i");
+      var theUrlToCheck = data.theUrlInput;
+      if(regexHttp.test(theUrlToCheck)){
+          res.redirect(301, data.theUrlInput)
+      } else{
+          res.redirect(301, 'http://'+ data.theUrlInput);
+      }
+  })
+});
 
 
 //check if app is listening to localhost or if app is working
